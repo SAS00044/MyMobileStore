@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>متجري الذكي</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; text-align: center; }
+        .container { background: white; max-width: 500px; margin: auto; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .app-item { background: #fff; border: 1px solid #ddd; margin: 10px 0; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 5px; }
+        .download-btn { background: #28a745; color: white; text-decoration: none; padding: 5px 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>رفع تطبيق جديد</h2>
+        <form action="/upload" method="POST" enctype="multipart/form-data">
+            <input type="file" name="apkFile" accept=".apk" required>
+            <button type="submit">رفع الآن</button>
+        </form>
+
+        <hr>
+        <h3>التطبيقات المتوفرة</h3>
+        <div id="appList"></div>
+    </div>
+
+    <script>
+        // كود بسيط لجلب قائمة الملفات وعرضها
+        fetch('/apps')
+            .then(res => res.json())
+            .then(files => {
+                const list = document.getElementById('appList');
+                files.forEach(file => {
+                    const div = document.createElement('div');
+                    div.className = 'app-item';
+                    div.innerHTML = `<span>${file}</span> <a class="download-btn" href="/download/${file}" download>تحميل</a>`;
+                    list.appendChild(div);
+                });
+            });
+    </script>
+</body>
+</html>
