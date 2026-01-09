@@ -28,4 +28,4 @@ app.post('/upload', upload.single('apkFile'), (req, res) => {
   res.send('<h1>تم الرفع بنجاح!</h1><a href="/">العودة للمتجر</a>');
 });
 
-app.listen(3000, () => console.log('المتجر جاهز على http://localhost:3000'));
+app.listen(5000, '0.0.0.0', () => console.log('المتجر جاهز على http://0.0.0.0:5000'));
