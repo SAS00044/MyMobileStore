@@ -27,8 +27,8 @@ const upload = multer({ storage: storage });
 app.use(express.static('public'));
 app.use('/apps', express.static(uploadDir));
 
-// واجهة رفع الملفات
-app.post('/upload', upload.single('apkFile'), (req, file) => {
+// واجهة رفع الملفات - تم تصحيح الخطأ هنا (إضافة res)
+app.post('/upload', upload.single('apkFile'), (req, res) => {
     if (!req.file) return res.status(400).send('لم يتم اختيار ملف.');
     res.redirect('/');
 });
