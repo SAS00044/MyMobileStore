@@ -2,40 +2,60 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>متجري الذكي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجر علي للتطبيقات</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; text-align: center; }
-        .container { background: white; max-width: 500px; margin: auto; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .app-item { background: #fff; border: 1px solid #ddd; margin: 10px 0; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 5px; }
-        .download-btn { background: #28a745; color: white; text-decoration: none; padding: 5px 10px; border-radius: 4px; }
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #f4f4f4; }
+        .container { max-width: 500px; margin: 50px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .app-item { background: #eee; margin: 10px 0; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .download-btn { background: #28a745; color: white; text-decoration: none; padding: 5px 15px; border-radius: 5px; }
+        input[type="file"] { margin: 20px 0; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>رفع تطبيق جديد</h2>
-        <form action="/upload" method="POST" enctype="multipart/form-data">
-            <input type="file" name="apkFile" accept=".apk" required>
-            <button type="submit">رفع الآن</button>
-        </form>
 
-        <hr>
-        <h3>التطبيقات المتوفرة</h3>
-        <div id="appList"></div>
-    </div>
+<div class="container">
+    <h1>متجر تطبيقاتي 📱</h1>
+    
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <input type="file" name="apkFile" accept=".apk" required>
+        <br>
+        <button type="submit">رفع تطبيق جديد</button>
+    </form>
 
-    <script>
-        // كود بسيط لجلب قائمة الملفات وعرضها
-        fetch('/apps')
-            .then(res => res.json())
-            .then(files => {
-                const list = document.getElementById('appList');
-                files.forEach(file => {
-                    const div = document.createElement('div');
-                    div.className = 'app-item';
-                    div.innerHTML = `<span>${file}</span> <a class="download-btn" href="/download/${file}" download>تحميل</a>`;
-                    list.appendChild(div);
-                });
-            });
-    </script>
+    <hr>
+
+    <h3>التطبيقات المتاحة</h3>
+    <div id="appsList">جاري تحميل القائمة...</div>
+</div>
+
+<script>
+    // جلب قائمة التطبيقات من السيرفر
+    async function loadApps() {
+        const response = await fetch('/list-apps');
+        const apps = await response.json();
+        const listDiv = document.getElementById('appsList');
+        
+        if (apps.length === 0) {
+            listDiv.innerHTML = "لا توجد تطبيقات مرفوعة حالياً.";
+            return;
+        }
+
+        listDiv.innerHTML = '';
+        apps.forEach(app => {
+            const div = document.createElement('div');
+            div.className = 'app-item';
+            div.innerHTML = `
+                <span>${app.name}</span>
+                <a href="${app.url}" class="download-btn" download>تحميل</a>
+            `;
+            listDiv.appendChild(div);
+        });
+    }
+
+    loadApps();
+</script>
+
 </body>
 </html>
