@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -6,77 +7,57 @@
     <title>متجر علي الاحترافي</title>
     <style>
         :root { --gold: #d4af37; --dark: #121212; --card: #1e1e1e; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--dark); color: white; margin: 0; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; padding: 20px; }
         .container { max-width: 600px; margin: auto; }
-        header { text-align: center; padding: 40px 0; border-bottom: 2px solid var(--gold); margin-bottom: 30px; }
-        h1 { color: var(--gold); text-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
-        
-        .admin-box { background: var(--card); border: 1px dashed var(--gold); padding: 20px; border-radius: 15px; margin-bottom: 30px; display: none; } /* مخفي افتراضياً */
-        
-        .app-card { background: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.3s; border: 1px solid transparent; }
-        .app-card:hover { border-color: var(--gold); transform: translateY(-3px); }
-        
-        .download-btn { background: linear-gradient(45deg, #28a745, #1e7e34); color: white; text-decoration: none; padding: 10px 25px; border-radius: 10px; font-weight: bold; }
-        
-        .btn-toggle { background: none; border: 1px solid #444; color: #888; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; margin-top: 10px; }
-        
-        .input-style { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #111; color: white; }
-        .btn-upload { background: var(--gold); color: black; border: none; padding: 12px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .admin-box { background: var(--card); border: 1px solid var(--gold); padding: 20px; border-radius: 15px; margin-bottom: 20px; display: none; }
+        .input-style { width: 95%; padding: 10px; margin: 5px 0; border-radius: 8px; background: #111; color: white; border: 1px solid #333; }
+        .app-card { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; border-right: 5px solid var(--gold); }
+        .app-icon { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; }
+        .app-info { flex-grow: 1; }
+        .app-info h4 { margin: 0; color: var(--gold); }
+        .app-info p { margin: 5px 0 0; font-size: 13px; color: #aaa; }
+        .btn-download { background: var(--gold); color: black; text-decoration: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; font-size: 14px; }
+        .btn-admin { background: none; border: 1px solid #444; color: #888; cursor: pointer; padding: 5px 10px; border-radius: 5px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
+    <div class="container">
+        <h1 style="text-align:center; color:var(--gold)">✨ متجر تطبيقات علي ✨</h1>
+        <button class="btn-admin" onclick="document.getElementById('adminPanel').style.display='block'">دخول المالك ⚙️</button>
 
-<div class="container">
-    <header>
-        <h1>✨ متجر تطبيقات علي ✨</h1>
-        <button class="btn-toggle" onclick="toggleAdmin()">لوحة المالك ⚙️</button>
-    </header>
+        <div id="adminPanel" class="admin-box">
+            <form action="/upload" method="POST" enctype="multipart/form-data">
+                <input type="password" name="password" placeholder="كلمة السر" class="input-style" required>
+                <input type="text" name="appName" placeholder="اسم التطبيق" class="input-style" required>
+                <input type="text" name="description" placeholder="وصف قصير" class="input-style">
+                <input type="text" name="imageUrl" placeholder="رابط أيقونة (صورة)" class="input-style">
+                <input type="file" name="apkFile" accept=".apk" class="input-style" required>
+                <button type="submit" style="width:100%; background:var(--gold); padding:10px; border:none; border-radius:8px; font-weight:bold; cursor:pointer">نشر الآن</button>
+            </form>
+        </div>
 
-    <div id="adminPanel" class="admin-box">
-        <h3 style="color: var(--gold); margin-top: 0;">الرفع الآمن للمالك</h3>
-        <form action="/upload" method="POST" enctype="multipart/form-data">
-            <input type="password" name="password" placeholder="أدخل كلمة المرور السرية" class="input-style" required>
-            <input type="file" name="apkFile" accept=".apk" class="input-style" required>
-            <button type="submit" class="btn-upload">نشر التطبيق الآن</button>
-        </form>
+        <div id="appsList">جاري التحميل...</div>
     </div>
 
-    <h3>📦 التطبيقات المتاحة</h3>
-    <div id="appsList">جاري جلب التطبيقات...</div>
-</div>
-
-<script>
-    function toggleAdmin() {
-        const panel = document.getElementById('adminPanel');
-        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-    }
-
-    async function loadApps() {
-        const response = await fetch('/list-apps');
-        const apps = await response.json();
-        const listDiv = document.getElementById('appsList');
-        
-        if (apps.length === 0) {
-            listDiv.innerHTML = "<p style='color: #666;'>لا توجد تطبيقات مرفوعة بعد.</p>";
-            return;
+    <script>
+        async function loadApps() {
+            const res = await fetch('/list-apps');
+            const apps = await res.json();
+            const list = document.getElementById('appsList');
+            list.innerHTML = '';
+            apps.forEach(app => {
+                list.innerHTML += `
+                    <div class="app-card">
+                        <img src="${app.img}" class="app-icon">
+                        <div class="app-info">
+                            <h4>${app.name}</h4>
+                            <p>${app.desc}</p>
+                        </div>
+                        <a href="${app.url}" class="btn-download" download>تحميل</a>
+                    </div>`;
+            });
         }
-
-        listDiv.innerHTML = '';
-        apps.forEach(app => {
-            const div = document.createElement('div');
-            div.className = 'app-card';
-            div.innerHTML = `
-                <div>
-                    <div style="font-weight: bold;">${app.name}</div>
-                    <div style="font-size: 12px; color: #888;">نسخة APK آمنة</div>
-                </div>
-                <a href="${app.url}" class="download-btn" download>تحميل</a>
-            `;
-            listDiv.appendChild(div);
-        });
-    }
-    loadApps();
-</script>
-
+        loadApps();
+    </script>
 </body>
 </html>

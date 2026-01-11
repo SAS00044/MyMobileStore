@@ -5,56 +5,48 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const DB_FILE = './database.json';
 
-// التأكد من وجود مجلد ثابت لحفظ التطبيقات
-const uploadDir = path.join(__dirname, 'public/apps');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+// التأكد من المجلدات وقاعدة البيانات
+if (!fs.existsSync('./public/apps')) fs.mkdirSync('./public/apps', { recursive: true });
+if (!fs.existsSync(DB_FILE)) fs.writeFileSync(DB_FILE, '[]');
 
-// إعداد التخزين
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
+    destination: './public/apps',
+    filename: (req, file, cb) => { cb(null, Date.now() + '-' + file.originalname); }
 });
-
 const upload = multer({ storage: storage });
 
 app.use(express.static('public'));
-app.use(express.urlencoded({ extended: true })); // لقراءة كلمة السر من الفورم
-app.use('/apps', express.static(uploadDir));
+app.use(express.urlencoded({ extended: true }));
+app.use('/apps', express.static('./public/apps'));
 
-// واجهة رفع الملفات مع حماية بكلمة سر
+// جلب البيانات
+app.get('/list-apps', (req, res) => {
+    const data = JSON.parse(fs.readFileSync(DB_FILE));
+    res.json(data);
+});
+
+// رفع التطبيق
 app.post('/upload', upload.single('apkFile'), (req, res) => {
-    // ADMIN_PASSWORD يجب أن تضيفها في قسم الـ Secrets في ريبلت
-    const masterPassword = process.env['ADMIN_PASSWORD'] || "1234"; 
-    const userPassword = req.body.password;
+    const masterPassword = process.env['ADMIN_PASSWORD'] || "1234";
+    const { password, appName, description, imageUrl } = req.body;
 
-    if (userPassword !== masterPassword) {
-        if (req.file) fs.unlinkSync(req.file.path); // حذف الملف إذا كانت كلمة السر خطأ
-        return res.status(403).send('<h1>عذراً، كلمة السر خاطئة! الرفع للمالك فقط.</h1><a href="/">عودة للمتجر</a>');
+    if (password !== masterPassword) {
+        if (req.file) fs.unlinkSync(req.file.path);
+        return res.status(403).send('كلمة سر خاطئة!');
     }
 
-    if (!req.file) return res.status(400).send('لم يتم اختيار ملف.');
+    const db = JSON.parse(fs.readFileSync(DB_FILE));
+    db.push({
+        id: Date.now(),
+        name: appName,
+        desc: description,
+        img: imageUrl || "https://cdn-icons-png.flaticon.com/512/2522/2522649.png",
+        url: `/apps/${req.file.filename}`
+    });
+    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
     res.redirect('/');
 });
 
-// جلب قائمة التطبيقات
-app.get('/list-apps', (req, res) => {
-    fs.readdir(uploadDir, (err, files) => {
-        if (err) return res.json([]);
-        const apps = files.map(file => ({
-            name: file,
-            url: `/apps/${file}`
-        }));
-        res.json(apps);
-    });
-});
-
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`المتجر يعمل على منفذ ${PORT}`));
