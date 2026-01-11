@@ -12,7 +12,7 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// إعداد التخزين باسم الملف الأصلي
+// إعداد التخزين
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, uploadDir);
@@ -25,10 +25,20 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 app.use(express.static('public'));
+app.use(express.urlencoded({ extended: true })); // لقراءة كلمة السر من الفورم
 app.use('/apps', express.static(uploadDir));
 
-// واجهة رفع الملفات - تم تصحيح الخطأ هنا (إضافة res)
+// واجهة رفع الملفات مع حماية بكلمة سر
 app.post('/upload', upload.single('apkFile'), (req, res) => {
+    // ADMIN_PASSWORD يجب أن تضيفها في قسم الـ Secrets في ريبلت
+    const masterPassword = process.env['ADMIN_PASSWORD'] || "1234"; 
+    const userPassword = req.body.password;
+
+    if (userPassword !== masterPassword) {
+        if (req.file) fs.unlinkSync(req.file.path); // حذف الملف إذا كانت كلمة السر خطأ
+        return res.status(403).send('<h1>عذراً، كلمة السر خاطئة! الرفع للمالك فقط.</h1><a href="/">عودة للمتجر</a>');
+    }
+
     if (!req.file) return res.status(400).send('لم يتم اختيار ملف.');
     res.redirect('/');
 });
@@ -46,5 +56,5 @@ app.get('/list-apps', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
