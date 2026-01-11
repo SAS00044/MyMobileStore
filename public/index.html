@@ -3,57 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متجر علي للتطبيقات</title>
+    <title>متجر علي الاحترافي</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background-color: #f4f4f4; }
-        .container { max-width: 500px; margin: 50px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .app-item { background: #eee; margin: 10px 0; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
-        .download-btn { background: #28a745; color: white; text-decoration: none; padding: 5px 15px; border-radius: 5px; }
-        input[type="file"] { margin: 20px 0; }
-        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        :root { --gold: #d4af37; --dark: #1a1a1a; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--dark); color: white; text-align: center; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: #2a2a2a; padding: 30px; border-radius: 20px; border: 1px solid var(--gold); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h1 { color: var(--gold); font-size: 2rem; margin-bottom: 30px; }
+        .upload-section { background: #333; padding: 20px; border-radius: 15px; margin-bottom: 30px; }
+        input[type="file"] { margin: 15px 0; color: #ccc; }
+        .btn-upload { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; }
+        .app-card { background: #3d3d3d; margin: 15px 0; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border-right: 5px solid var(--gold); }
+        .app-name { font-size: 1.1rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60% }
+        .btn-download { background: #28a745; color: white; text-decoration: none; padding: 8px 20px; border-radius: 8px; font-size: 0.9rem; transition: 0.3s; }
+        .btn-download:hover { background: #218838; transform: scale(1.05); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>متجر تطبيقاتي 📱</h1>
+    <h1>✨ متجر تطبيقات علي ✨</h1>
     
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-        <input type="file" name="apkFile" accept=".apk" required>
-        <br>
-        <button type="submit">رفع تطبيق جديد</button>
-    </form>
+    <div class="upload-section">
+        <form action="/upload" method="POST" enctype="multipart/form-data">
+            <input type="file" name="apkFile" accept=".apk" required>
+            <button type="submit" class="btn-upload">🚀 رفع تطبيق جديد</button>
+        </form>
+    </div>
 
-    <hr>
-
-    <h3>التطبيقات المتاحة</h3>
-    <div id="appsList">جاري تحميل القائمة...</div>
+    <h3>📦 التطبيقات المثبتة</h3>
+    <div id="appsList">جاري فحص المستودع...</div>
 </div>
 
 <script>
-    // جلب قائمة التطبيقات من السيرفر
     async function loadApps() {
-        const response = await fetch('/list-apps');
-        const apps = await response.json();
-        const listDiv = document.getElementById('appsList');
-        
-        if (apps.length === 0) {
-            listDiv.innerHTML = "لا توجد تطبيقات مرفوعة حالياً.";
-            return;
+        try {
+            const response = await fetch('/list-apps');
+            const apps = await response.json();
+            const listDiv = document.getElementById('appsList');
+            
+            if (apps.length === 0) {
+                listDiv.innerHTML = "<p style='color: #888;'>المتجر فارغ حالياً</p>";
+                return;
+            }
+
+            listDiv.innerHTML = '';
+            apps.forEach(app => {
+                const div = document.createElement('div');
+                div.className = 'app-card';
+                // تم إضافة attribute 'download' لضمان التحميل المباشر
+                div.innerHTML = `
+                    <span class="app-name">📱 ${app.name}</span>
+                    <a href="${app.url}" class="btn-download" download="${app.name}">تحميل مباشر</a>
+                `;
+                listDiv.appendChild(div);
+            });
+        } catch (e) {
+            console.error("خطأ في جلب البيانات");
         }
-
-        listDiv.innerHTML = '';
-        apps.forEach(app => {
-            const div = document.createElement('div');
-            div.className = 'app-item';
-            div.innerHTML = `
-                <span>${app.name}</span>
-                <a href="${app.url}" class="download-btn" download>تحميل</a>
-            `;
-            listDiv.appendChild(div);
-        });
     }
-
     loadApps();
 </script>
 
