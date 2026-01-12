@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -9,49 +8,75 @@
         :root { --gold: #d4af37; --dark: #121212; --card: #1e1e1e; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; padding: 20px; }
         .container { max-width: 600px; margin: auto; }
+        header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid var(--gold); padding-bottom: 20px; }
         .admin-box { background: var(--card); border: 1px solid var(--gold); padding: 20px; border-radius: 15px; margin-bottom: 20px; display: none; }
         .input-style { width: 95%; padding: 10px; margin: 5px 0; border-radius: 8px; background: #111; color: white; border: 1px solid #333; }
-        .app-card { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; border-right: 5px solid var(--gold); }
-        .app-icon { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; }
+        .app-card { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; border-right: 5px solid var(--gold); position: relative; }
+        .app-icon { width: 65px; height: 65px; border-radius: 12px; object-fit: cover; border: 1px solid #333; }
         .app-info { flex-grow: 1; }
-        .app-info h4 { margin: 0; color: var(--gold); }
+        .app-info h4 { margin: 0; color: var(--gold); font-size: 18px; }
         .app-info p { margin: 5px 0 0; font-size: 13px; color: #aaa; }
-        .btn-download { background: var(--gold); color: black; text-decoration: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; font-size: 14px; }
-        .btn-admin { background: none; border: 1px solid #444; color: #888; cursor: pointer; padding: 5px 10px; border-radius: 5px; margin-bottom: 20px; }
+        .btn-download { background: var(--gold); color: black; text-decoration: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; }
+        .btn-admin { background: none; border: 1px solid #444; color: #888; cursor: pointer; padding: 8px; border-radius: 8px; margin-bottom: 20px; width: 100%; }
+        .delete-form { margin-top: 10px; display: none; } /* يظهر فقط عند تفعيل وضع الإدارة */
+        .btn-delete { background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 style="text-align:center; color:var(--gold)">✨ متجر تطبيقات علي ✨</h1>
-        <button class="btn-admin" onclick="document.getElementById('adminPanel').style.display='block'">دخول المالك ⚙️</button>
+        <header>
+            <h1>✨ متجر تطبيقات علي ✨</h1>
+            <button class="btn-admin" onclick="toggleAdmin()">دخول المالك ⚙️</button>
+        </header>
 
         <div id="adminPanel" class="admin-box">
             <form action="/upload" method="POST" enctype="multipart/form-data">
-                <input type="password" name="password" placeholder="كلمة السر" class="input-style" required>
+                <input type="password" name="password" placeholder="كلمة السر للمالك" class="input-style" required>
                 <input type="text" name="appName" placeholder="اسم التطبيق" class="input-style" required>
-                <input type="text" name="description" placeholder="وصف قصير" class="input-style">
-                <input type="text" name="imageUrl" placeholder="رابط أيقونة (صورة)" class="input-style">
+                <textarea name="description" placeholder="وصف التطبيق" class="input-style"></textarea>
+                <input type="text" name="imageUrl" placeholder="رابط الأيقونة (Image URL)" class="input-style">
                 <input type="file" name="apkFile" accept=".apk" class="input-style" required>
-                <button type="submit" style="width:100%; background:var(--gold); padding:10px; border:none; border-radius:8px; font-weight:bold; cursor:pointer">نشر الآن</button>
+                <button type="submit" style="width:100%; background:var(--gold); padding:12px; border:none; border-radius:10px; font-weight:bold; cursor:pointer; margin-top:10px">🚀 نشر التطبيق</button>
             </form>
         </div>
 
-        <div id="appsList">جاري التحميل...</div>
+        <div id="appsList">جاري جلب التطبيقات...</div>
     </div>
 
     <script>
+        let adminMode = false;
+
+        function toggleAdmin() {
+            adminMode = !adminMode;
+            document.getElementById('adminPanel').style.display = adminMode ? 'block' : 'none';
+            loadApps(); // إعادة التحميل لإظهار أزرار الحذف
+        }
+
         async function loadApps() {
             const res = await fetch('/list-apps');
             const apps = await res.json();
             const list = document.getElementById('appsList');
             list.innerHTML = '';
+            
+            if(apps.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#666;">لا توجد تطبيقات حالياً</p>';
+                return;
+            }
+
             apps.forEach(app => {
                 list.innerHTML += `
                     <div class="app-card">
-                        <img src="${app.img}" class="app-icon">
+                        <img src="${app.img}" class="app-icon" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2522/2522649.png'">
                         <div class="app-info">
                             <h4>${app.name}</h4>
-                            <p>${app.desc}</p>
+                            <p>${app.desc || 'لا يوجد وصف'}</p>
+                            ${adminMode ? `
+                                <form action="/delete-app" method="POST" class="delete-form" style="display:block">
+                                    <input type="hidden" name="appId" value="${app.id}">
+                                    <input type="password" name="password" placeholder="سر الحذف" style="width:70px; font-size:10px; background:#000; color:#fff; border:1px solid var(--gold)">
+                                    <button type="submit" class="btn-delete">حذف 🗑️</button>
+                                </form>
+                            ` : ''}
                         </div>
                         <a href="${app.url}" class="btn-download" download>تحميل</a>
                     </div>`;
